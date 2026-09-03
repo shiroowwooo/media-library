@@ -190,9 +190,7 @@ function renderFolders(
             "Delete folder";
 
         deleteButton.style.display =
-            String(currentFolder) === String(folder.id)
-                ? "inline-flex"
-                : "none";
+            "none";
 
         deleteButton.onclick = async (event) => {
 
@@ -338,6 +336,16 @@ async function selectFolder(
     currentFolderName =
         name;
 
+    $("title").textContent =
+        name;
+
+    $("breadcrumb").textContent =
+        name;
+
+    $("search").value = "";
+
+    await loadFolders();
+
     document
         .querySelectorAll(
             ".folder"
@@ -348,22 +356,28 @@ async function selectFolder(
             )
         );
 
-    if (element) {
+    const activeFolder =
+        document.querySelector(
+            `.folder[data-id="${id}"]`
+        );
 
-        element.classList.add(
+    if (activeFolder) {
+
+        activeFolder.classList.add(
             "active"
         );
+
+        const deleteButton =
+            activeFolder.parentElement.querySelector(
+                ".folder-delete"
+            );
+
+        if (deleteButton) {
+
+            deleteButton.style.display =
+                "inline-flex";
+        }
     }
-
-    $("title").textContent =
-        name;
-
-    $("breadcrumb").textContent =
-        name;
-
-    $("search").value = "";
-
-    await loadFolders();
 
     await loadFiles();
 
