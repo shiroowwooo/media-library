@@ -732,3 +732,18 @@ h1 {
     }
 }
 
+.folder-delete {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 4px 7px;
+    border: none;
+    border-radius: 6px;
+    background: #ff4444;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.folder-delete:hover {
+    opacity: 0.8;
+}
