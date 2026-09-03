@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Media Library</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
+
+        <div class="brand">
+            📚
+            <span>Media Library</span>
+        </div>
+
+        <button
+            class="new-folder"
+            onclick="newFolder()"
+        >
+            ＋ New Folder
+        </button>
+
+        <div class="nav-title">
+            LIBRARY
+        </div>
+
+        <button
+            class="folder root active"
+            data-id="root"
+            onclick="selectFolder('root', 'All Files', this)"
+        >
+            📁
+            <span>All Files</span>
+        </button>
+
+        <div id="folderTree"></div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <button
+                class="mobile-menu"
+                onclick="toggleSidebar()"
+            >
+                ☰
+            </button>
+
+            <div class="search">
+
+                🔎
+
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="Search filename or keyword..."
+                    oninput="debouncedLoad()"
+                >
+
+            </div>
+
+            <button
+                class="upload-btn"
+                onclick="document.getElementById('fileInput').click()"
+            >
+                ＋ Upload
+            </button>
+
+            <input
+                id="fileInput"
+                type="file"
+                multiple
+                hidden
+                accept="image/*,video/*"
+            >
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <section class="content">
+
+            <div class="heading">
+
+                <div>
+
+                    <div
+                        class="crumb"
+                        id="breadcrumb"
+                    >
+                        All Files
+                    </div>
+
+                    <h1 id="title">
+                        All Files
+                    </h1>
+
+                    <div
+                        class="count"
+                        id="count"
+                    >
+                        0 files
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- DROP ZONE -->
+
+            <div
+                class="drop-zone"
+                id="dropZone"
+            >
+
+                <strong>
+                    Drop images or videos here
+                </strong>
+
+                <span>
+                    or click here to upload
+                </span>
+
+            </div>
+
+
+            <!-- FILE GRID -->
+
+            <div
+                class="grid"
+                id="grid"
+            ></div>
+
+
+            <!-- EMPTY -->
+
+            <div
+                class="empty"
+                id="empty"
+                hidden
+            >
+
+                <div>📂</div>
+
+                <h2>
+                    No files here
+                </h2>
+
+                <p>
+                    Upload images or videos to start your library.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- FILE MODAL -->
+
+<div
+    class="modal"
+    id="modal"
+    hidden
+>
+
+    <div
+        class="modal-backdrop"
+        onclick="closeModal()"
+    ></div>
+
+    <div class="modal-card">
+
+        <button
+            class="close"
+            onclick="closeModal()"
+        >
+            ×
+        </button>
+
+
+        <!-- PREVIEW -->
+
+        <div id="preview"></div>
+
+
+        <!-- DETAILS -->
+
+        <div class="details">
+
+            <h2 id="detailName">
+                File
+            </h2>
+
+            <div
+                class="meta"
+                id="detailMeta"
+            ></div>
+
+
+            <label>
+                Rename
+            </label>
+
+            <input
+                id="detailNameInput"
+                placeholder="File name"
+            >
+
+
+            <label>
+                Keywords / Tags
+            </label>
+
+            <input
+                id="detailKeywords"
+                placeholder="HOK, Augran, skin..."
+            >
+
+
+            <label>
+                Folder
+            </label>
+
+            <select
+                id="detailFolder"
+            ></select>
+
+
+            <div class="actions">
+
+                <button
+                    onclick="saveDetails()"
+                >
+                    Save
+                </button>
+
+                <a
+                    id="downloadBtn"
+                    class="secondary"
+                >
+                    Download
+                </a>
+
+                <button
+                    class="danger"
+                    onclick="deleteCurrent()"
+                >
+                    Delete
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='app.js') }}"
+></script>
+
+</body>
+
+</html>
+
