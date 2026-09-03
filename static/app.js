@@ -804,88 +804,293 @@ async function newFolder() {
    UPLOAD
 -------------------------------------------------- */
 
-async function uploadFiles(
-    fileList
-) {
+async function uploadFiles(fileList) {
 
-    if (
-        !fileList ||
-        !fileList.length
-    ) {
+    if (!fileList || !fileList.length) {
         return;
     }
 
-
-    const keywords =
-        prompt(
-            "Optional keywords/tags for these files:",
-            ""
-        );
-
+    const keywords = prompt(
+        "Optional keywords/tags for these files:",
+        ""
+    );
 
     if (keywords === null) {
         return;
     }
 
+    // Files larger than 50 MB use multipart upload.
+    const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
+
+    // 10 MB chunks.
+    const CHUNK_SIZE = 10 * 1024 * 1024;
 
     try {
 
-        for (
-            const file
-            of fileList
-        ) {
+        for (const file of fileList) {
 
-            const formData =
-                new FormData();
+            /*
+             * SMALL FILE
+             */
 
-            formData.append(
-                "file",
-                file
-            );
+            if (file.size <= MULTIPART_THRESHOLD) {
 
-            formData.append(
-                "name",
-                file.name
-            );
-
-            formData.append(
-                "keywords",
-                keywords
-            );
-
-
-            if (
-                currentFolder !==
-                "root"
-            ) {
+                const formData = new FormData();
 
                 formData.append(
-                    "folder_id",
-                    currentFolder
+                    "file",
+                    file
+                );
+
+                formData.append(
+                    "name",
+                    file.name
+                );
+
+                formData.append(
+                    "keywords",
+                    keywords
+                );
+
+                if (currentFolder !== "root") {
+
+                    formData.append(
+                        "folder_id",
+                        currentFolder
+                    );
+                }
+
+                await api(
+                    "/api/upload",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                continue;
+            }
+
+
+            /*
+             * LARGE FILE
+             */
+
+            console.log(
+                `Starting large upload: ${file.name}`
+            );
+
+
+            // Start multipart upload.
+
+            const start = await api(
+                "/api/upload/start",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        filename:
+                            file.name,
+
+                        content_type:
+                            file.type ||
+                            "application/octet-stream",
+
+                        size:
+                            file.size,
+
+                        keywords:
+                            keywords,
+
+                        folder_id:
+                            currentFolder === "root"
+                                ? null
+                                : Number(currentFolder)
+
+                    })
+                }
+            );
+
+
+            const uploadId =
+                start.upload_id;
+
+            const key =
+                start.key;
+
+            const parts = [];
+
+            let partNumber = 1;
+
+
+            /*
+             * Upload chunks one by one.
+             */
+
+            for (
+                let startByte = 0;
+                startByte < file.size;
+                startByte += CHUNK_SIZE
+            ) {
+
+                const endByte =
+                    Math.min(
+                        startByte + CHUNK_SIZE,
+                        file.size
+                    );
+
+                const chunk =
+                    file.slice(
+                        startByte,
+                        endByte
+                    );
+
+
+                console.log(
+                    `Uploading part ${partNumber}`
+                );
+
+
+                const response =
+                    await fetch(
+                        API_BASE +
+                        "/api/upload/part" +
+                        `?upload_id=${encodeURIComponent(uploadId)}` +
+                        `&key=${encodeURIComponent(key)}` +
+                        `&part_number=${partNumber}`,
+                        {
+                            method: "POST",
+
+                            body: chunk
+                        }
+                    );
+
+
+                const data =
+                    await response
+                        .json()
+                        .catch(
+                            () => ({})
+                        );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error ||
+                        `Upload failed on part ${partNumber}`
+                    );
+                }
+
+
+                parts.push({
+
+                    part_number:
+                        data.part_number,
+
+                    etag:
+                        data.etag
+
+                });
+
+
+                partNumber++;
+
+
+                const uploaded =
+                    Math.min(
+                        endByte,
+                        file.size
+                    );
+
+                const percent =
+                    Math.round(
+                        uploaded /
+                        file.size *
+                        100
+                    );
+
+
+                console.log(
+                    `${file.name}: ${percent}%`
                 );
             }
 
 
+            /*
+             * Complete multipart upload.
+             */
+
             await api(
-                "/api/upload",
+                "/api/upload/complete",
                 {
                     method: "POST",
-                    body: formData
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        upload_id:
+                            uploadId,
+
+                        key:
+                            key,
+
+                        filename:
+                            file.name,
+
+                        content_type:
+                            file.type ||
+                            "application/octet-stream",
+
+                        size:
+                            file.size,
+
+                        keywords:
+                            keywords,
+
+                        folder_id:
+                            currentFolder === "root"
+                                ? null
+                                : Number(currentFolder),
+
+                        parts:
+                            parts
+                    })
                 }
             );
 
+
+            console.log(
+                `Finished upload: ${file.name}`
+            );
         }
+
 
         await loadFiles();
 
+
     } catch (error) {
+
+        console.error(
+            "Upload error:",
+            error
+        );
 
         alert(
             error.message
         );
     }
 }
-
 
 /* --------------------------------------------------
    FILE INPUT
