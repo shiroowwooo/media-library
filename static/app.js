@@ -1,3 +1,6 @@
+const API_BASE =
+    "https://media-library-api.vincentpatayan88.workers.dev";
+
 let currentFolder = "root";
 let currentFolderName = "All Files";
 let currentFile = null;
@@ -13,10 +16,10 @@ const $ = id =>
     document.getElementById(id);
 
 
-async function api(url, options = {}) {
+async function api(path, options = {}) {
 
     const response = await fetch(
-        url,
+        API_BASE + path,
         options
     );
 
@@ -79,11 +82,52 @@ async function loadFolders() {
     tree.innerHTML = "";
 
     renderFolders(
-        folderData,
+        buildFolderTree(folderData),
         tree
     );
 
     populateFolderSelect();
+}
+
+
+function buildFolderTree(folders) {
+
+    const map = {};
+    const roots = [];
+
+    folders.forEach(folder => {
+
+        map[folder.id] = {
+            ...folder,
+            children: []
+        };
+
+    });
+
+    folders.forEach(folder => {
+
+        if (
+            folder.parent_id !== null &&
+            map[folder.parent_id]
+        ) {
+
+            map[
+                folder.parent_id
+            ].children.push(
+                map[folder.id]
+            );
+
+        } else {
+
+            roots.push(
+                map[folder.id]
+            );
+
+        }
+
+    });
+
+    return roots;
 }
 
 
@@ -193,7 +237,7 @@ function populateFolderSelect() {
         </option>`;
 
     flattenFolders(
-        folderData
+        buildFolderTree(folderData)
     ).forEach(folder => {
 
         const option =
@@ -275,16 +319,40 @@ async function loadFiles() {
             .value
             .trim();
 
+    const params =
+        new URLSearchParams();
+
+    if (
+        currentFolder !==
+        "root"
+    ) {
+
+        params.set(
+            "folder_id",
+            currentFolder
+        );
+
+    }
+
+    if (query) {
+
+        params.set(
+            "search",
+            query
+        );
+
+    }
+
+    const queryString =
+        params.toString();
+
     const url =
-        `/api/files?folder_id=${
-            encodeURIComponent(
-                currentFolder
-            )
-        }&q=${
-            encodeURIComponent(
-                query
-            )
-        }`;
+        "/api/files" +
+        (
+            queryString
+                ? "?" + queryString
+                : ""
+        );
 
     const files =
         await api(url);
@@ -338,8 +406,20 @@ function createCard(file) {
         "thumb";
 
 
+    const mediaType =
+        file.media_type ||
+        (
+            file.mime_type &&
+            file.mime_type.startsWith(
+                "image/"
+            )
+                ? "image"
+                : "video"
+        );
+
+
     if (
-        file.media_type ===
+        mediaType ===
         "image"
     ) {
 
@@ -349,7 +429,8 @@ function createCard(file) {
             );
 
         image.src =
-            file.url;
+            API_BASE +
+            `/media/${file.id}`;
 
         image.loading =
             "lazy";
@@ -453,9 +534,21 @@ async function openFile(
         );
 
 
+    const mediaType =
+        currentFile.media_type ||
+        (
+            currentFile.mime_type &&
+            currentFile.mime_type.startsWith(
+                "image/"
+            )
+                ? "image"
+                : "video"
+        );
+
+
     $("detailMeta").innerHTML =
         `
-        ${currentFile.media_type.toUpperCase()}
+        ${mediaType.toUpperCase()}
         · ${size}
 
         <br>
@@ -475,18 +568,19 @@ async function openFile(
 
 
     $("downloadBtn").href =
-        currentFile.download_url;
+        API_BASE +
+        `/download/${currentFile.id}`;
 
 
     if (
-        currentFile.media_type ===
+        mediaType ===
         "image"
     ) {
 
         $("preview").innerHTML =
             `
             <img
-                src="${currentFile.url}"
+                src="${API_BASE}/media/${currentFile.id}"
                 alt=""
             >
             `;
@@ -496,7 +590,7 @@ async function openFile(
         $("preview").innerHTML =
             `
             <video
-                src="${currentFile.url}"
+                src="${API_BASE}/media/${currentFile.id}"
                 controls
                 autoplay
             ></video>
@@ -566,7 +660,7 @@ async function saveDetails() {
         await api(
             `/api/files/${currentFile.id}`,
             {
-                method: "PATCH",
+                method: "PUT",
 
                 headers: {
                     "Content-Type":
@@ -722,34 +816,6 @@ async function uploadFiles(
     }
 
 
-    const formData =
-        new FormData();
-
-
-    for (
-        const file
-        of fileList
-    ) {
-
-        formData.append(
-            "files",
-            file
-        );
-    }
-
-
-    if (
-        currentFolder !==
-        "root"
-    ) {
-
-        formData.append(
-            "folder_id",
-            currentFolder
-        );
-    }
-
-
     const keywords =
         prompt(
             "Optional keywords/tags for these files:",
@@ -757,26 +823,58 @@ async function uploadFiles(
         );
 
 
-    if (
-        keywords !== null
-    ) {
-
-        formData.append(
-            "keywords",
-            keywords
-        );
+    if (keywords === null) {
+        return;
     }
 
 
     try {
 
-        await api(
-            "/api/upload",
-            {
-                method: "POST",
-                body: formData
+        for (
+            const file
+            of fileList
+        ) {
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "file",
+                file
+            );
+
+            formData.append(
+                "name",
+                file.name
+            );
+
+            formData.append(
+                "keywords",
+                keywords
+            );
+
+
+            if (
+                currentFolder !==
+                "root"
+            ) {
+
+                formData.append(
+                    "folder_id",
+                    currentFolder
+                );
             }
-        );
+
+
+            await api(
+                "/api/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+        }
 
         await loadFiles();
 
@@ -900,6 +998,17 @@ function toggleSidebar(
 
 
 /* --------------------------------------------------
+   SEARCH
+-------------------------------------------------- */
+
+$("search")
+    .addEventListener(
+        "input",
+        debouncedLoad
+    );
+
+
+/* --------------------------------------------------
    FORMATTING
 -------------------------------------------------- */
 
@@ -997,6 +1106,8 @@ async function initialize() {
         await loadFiles();
 
     } catch (error) {
+
+        console.error(error);
 
         alert(
             error.message
