@@ -186,6 +186,11 @@ function renderFolders(
         deleteButton.title =
             "Delete folder";
 
+        deleteButton.style.display =
+            String(currentFolder) === String(folder.id)
+                ? "inline-flex"
+                : "none";
+
         deleteButton.onclick = async (event) => {
 
             event.stopPropagation();
@@ -206,15 +211,8 @@ function renderFolders(
                     }
                 );
 
-                if (
-                    String(currentFolder) ===
-                    String(folder.id)
-                ) {
-
-                    currentFolder = "root";
-                    currentFolderName = "All Files";
-
-                }
+                currentFolder = "root";
+                currentFolderName = "All Files";
 
                 await loadFolders();
                 await loadFiles();
@@ -362,6 +360,8 @@ async function selectFolder(
 
     $("search").value = "";
 
+    await loadFolders();
+
     await loadFiles();
 
     if (window.innerWidth <= 760) {
@@ -369,7 +369,6 @@ async function selectFolder(
         toggleSidebar(false);
     }
 }
-
 
 /* --------------------------------------------------
    LOAD FILES
