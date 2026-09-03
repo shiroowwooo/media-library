@@ -791,3 +791,24 @@ h1 {
     height: 32px;
     margin-left: 6px;
 }
+.video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #111;
+    pointer-events: none;
+}
+
+.thumb {
+    position: relative;
+    overflow: hidden;
+}
+
+.thumb .play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}

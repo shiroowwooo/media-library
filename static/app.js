@@ -346,16 +346,33 @@ async function selectFolder(
 
     await loadFolders();
 
+    // Hide every delete button first
     document
-        .querySelectorAll(
-            ".folder"
-        )
-        .forEach(button =>
-            button.classList.remove(
-                "active"
-            )
-        );
+        .querySelectorAll(".folder-delete")
+        .forEach(button => {
+            button.style.display = "none";
+        });
 
+    // Remove active state from all folders
+    document
+        .querySelectorAll(".folder")
+        .forEach(button => {
+            button.classList.remove("active");
+        });
+
+    // All Files = no delete button
+    if (String(id) === "root") {
+
+        await loadFiles();
+
+        if (window.innerWidth <= 760) {
+            toggleSidebar(false);
+        }
+
+        return;
+    }
+
+    // Find the folder that is currently open
     const activeFolder =
         document.querySelector(
             `.folder[data-id="${id}"]`
@@ -363,9 +380,7 @@ async function selectFolder(
 
     if (activeFolder) {
 
-        activeFolder.classList.add(
-            "active"
-        );
+        activeFolder.classList.add("active");
 
         const deleteButton =
             activeFolder.parentElement.querySelector(
@@ -382,7 +397,6 @@ async function selectFolder(
     await loadFiles();
 
     if (window.innerWidth <= 760) {
-
         toggleSidebar(false);
     }
 }
@@ -523,18 +537,77 @@ function createCard(file) {
 
     } else {
 
-        thumb.innerHTML =
-            `
-            <div class="file-icon">
-                🎥
-            </div>
+        const video =
+            document.createElement(
+                "video"
+            );
 
-            <div class="play">
-                ▶
-            </div>
-            `;
+        video.src =
+            API_BASE +
+            `/media/${file.id}`;
+
+        video.muted =
+            true;
+
+        video.playsInline =
+            true;
+
+        video.preload =
+            "metadata";
+
+        video.className =
+            "video-thumbnail";
+
+        video.addEventListener(
+            "loadeddata",
+            () => {
+
+                try {
+
+                    video.currentTime =
+                        0.1;
+
+                } catch (error) {
+
+                    console.log(
+                        "Could not seek video:",
+                        error
+                    );
+                }
+            }
+        );
+
+        video.addEventListener(
+            "seeked",
+            () => {
+
+                video.pause();
+
+            },
+            {
+                once: true
+            }
+        );
+
+        thumb.appendChild(
+            video
+        );
+
+        const play =
+            document.createElement(
+                "div"
+            );
+
+        play.className =
+            "play";
+
+        play.textContent =
+            "▶";
+
+        thumb.appendChild(
+            play
+        );
     }
-
 
     const body =
         document.createElement(
