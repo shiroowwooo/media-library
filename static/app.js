@@ -174,6 +174,69 @@ function renderFolders(
             button
         );
 
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.className =
+            "folder-delete";
+
+        deleteButton.textContent =
+            "🗑️";
+
+        deleteButton.title =
+            "Delete folder";
+
+        deleteButton.onclick = async (event) => {
+
+            event.stopPropagation();
+
+            const confirmed =
+                confirm(
+                    `Delete folder "${folder.name}" and everything inside it?`
+                );
+
+            if (!confirmed) return;
+
+            try {
+
+                await api(
+                    `/api/folders/${folder.id}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+                if (
+                    String(currentFolder) ===
+                    String(folder.id)
+                ) {
+
+                    currentFolder = "root";
+                    currentFolderName = "All Files";
+
+                }
+
+                await loadFolders();
+                await loadFiles();
+
+            } catch (error) {
+
+                console.error(
+                    "Folder deletion failed:",
+                    error
+                );
+
+                alert(
+                    "Failed to delete folder."
+                );
+
+            }
+        };
+
+        wrapper.appendChild(
+            deleteButton
+        );
+
         parentElement.appendChild(
             wrapper
         );
