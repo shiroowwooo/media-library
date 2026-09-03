@@ -747,3 +747,22 @@ h1 {
 .folder-delete:hover {
     opacity: 0.8;
 }
+.folder {
+    display: inline-flex;
+    align-items: center;
+    width: calc(100% - 45px);
+}
+
+.folder-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-left: 6px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
