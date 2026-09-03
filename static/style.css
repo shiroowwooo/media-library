@@ -766,3 +766,28 @@ h1 {
     cursor: pointer;
     font-size: 14px;
 }
+.folder {
+    flex: 1;
+}
+
+.folder-delete {
+    flex-shrink: 0;
+    margin-left: 6px;
+}
+.folder-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.folder-row .folder {
+    flex: 1;
+    width: auto;
+}
+
+.folder-row .folder-delete {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    margin-left: 6px;
+}

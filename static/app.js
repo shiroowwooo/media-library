@@ -170,6 +170,9 @@ function renderFolders(
                 button
             );
 
+        wrapper.className =
+            "folder-row";
+
         wrapper.appendChild(
             button
         );
