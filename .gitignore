@@ -1,3 +1,6 @@
 venv/
 __pycache__/
 *.pyc
+library.db
+library.db
+uploads/
