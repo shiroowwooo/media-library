@@ -912,7 +912,46 @@ async function uploadFiles(fileList) {
              * SMALL FILE
              */
 
-            if (file.size <= MULTIPART_THRESHOLD) { const q=new URLSearchParams({name:file.name,keywords}); if (currentFolder !== "root") q.set("folder_id",currentFolder); await api("/api/upload?"+q.toString(),{method:"POST",headers:{"Content-Type":file.type||"application/octet-stream"},body:file}); continue; } /*
+            if (file.size <= MULTIPART_THRESHOLD) {
+
+                const formData = new FormData();
+
+                formData.append(
+                    "file",
+                    file
+                );
+
+                formData.append(
+                    "name",
+                    file.name
+                );
+
+                formData.append(
+                    "keywords",
+                    keywords
+                );
+
+                if (currentFolder !== "root") {
+
+                    formData.append(
+                        "folder_id",
+                        currentFolder
+                    );
+                }
+
+                await api(
+                    "/api/upload",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                continue;
+            }
+
+
+            /*
              * LARGE FILE
              */
 
