@@ -346,33 +346,16 @@ async function selectFolder(
 
     await loadFolders();
 
-    // Hide every delete button first
     document
-        .querySelectorAll(".folder-delete")
-        .forEach(button => {
-            button.style.display = "none";
-        });
+        .querySelectorAll(
+            ".folder"
+        )
+        .forEach(button =>
+            button.classList.remove(
+                "active"
+            )
+        );
 
-    // Remove active state from all folders
-    document
-        .querySelectorAll(".folder")
-        .forEach(button => {
-            button.classList.remove("active");
-        });
-
-    // All Files = no delete button
-    if (String(id) === "root") {
-
-        await loadFiles();
-
-        if (window.innerWidth <= 760) {
-            toggleSidebar(false);
-        }
-
-        return;
-    }
-
-    // Find the folder that is currently open
     const activeFolder =
         document.querySelector(
             `.folder[data-id="${id}"]`
@@ -380,7 +363,9 @@ async function selectFolder(
 
     if (activeFolder) {
 
-        activeFolder.classList.add("active");
+        activeFolder.classList.add(
+            "active"
+        );
 
         const deleteButton =
             activeFolder.parentElement.querySelector(
@@ -397,6 +382,7 @@ async function selectFolder(
     await loadFiles();
 
     if (window.innerWidth <= 760) {
+
         toggleSidebar(false);
     }
 }
@@ -537,77 +523,18 @@ function createCard(file) {
 
     } else {
 
-        const video =
-            document.createElement(
-                "video"
-            );
+        thumb.innerHTML =
+            `
+            <div class="file-icon">
+                🎥
+            </div>
 
-        video.src =
-            API_BASE +
-            `/media/${file.id}`;
-
-        video.muted =
-            true;
-
-        video.playsInline =
-            true;
-
-        video.preload =
-            "metadata";
-
-        video.className =
-            "video-thumbnail";
-
-        video.addEventListener(
-            "loadeddata",
-            () => {
-
-                try {
-
-                    video.currentTime =
-                        0.1;
-
-                } catch (error) {
-
-                    console.log(
-                        "Could not seek video:",
-                        error
-                    );
-                }
-            }
-        );
-
-        video.addEventListener(
-            "seeked",
-            () => {
-
-                video.pause();
-
-            },
-            {
-                once: true
-            }
-        );
-
-        thumb.appendChild(
-            video
-        );
-
-        const play =
-            document.createElement(
-                "div"
-            );
-
-        play.className =
-            "play";
-
-        play.textContent =
-            "▶";
-
-        thumb.appendChild(
-            play
-        );
+            <div class="play">
+                ▶
+            </div>
+            `;
     }
+
 
     const body =
         document.createElement(
@@ -956,99 +883,6 @@ async function newFolder() {
    UPLOAD
 -------------------------------------------------- */
 
-
-function showUploadProgress(name, percent) {
-    let box = document.getElementById("upload-progress");
-
-    if (!box) {
-        box = document.createElement("div");
-        box.id = "upload-progress";
-        box.style.cssText = `
-            position: fixed;
-            left: 50%;
-            bottom: 24px;
-            transform: translateX(-50%);
-            width: min(420px, calc(100% - 32px));
-            padding: 14px 16px;
-            background: rgba(20,20,20,.95);
-            color: white;
-            border-radius: 12px;
-            z-index: 99999;
-            box-shadow: 0 6px 30px rgba(0,0,0,.3);
-            font-family: sans-serif;
-        `;
-
-        box.innerHTML = `
-            <div id="upload-progress-name"
-                 style="font-size:14px;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-            <div style="height:8px;background:#555;border-radius:99px;overflow:hidden">
-                <div id="upload-progress-bar"
-                     style="height:100%;width:0%;background:#4caf50;transition:width .15s"></div>
-            </div>
-            <div id="upload-progress-percent"
-                 style="font-size:13px;margin-top:6px;text-align:right">0%</div>
-        `;
-
-        document.body.appendChild(box);
-    }
-
-    document.getElementById("upload-progress-name").textContent =
-        `Uploading: ${name}`;
-
-    document.getElementById("upload-progress-bar").style.width =
-        `${percent}%`;
-
-    document.getElementById("upload-progress-percent").textContent =
-        `${percent}%`;
-}
-
-function hideUploadProgress() {
-    const box = document.getElementById("upload-progress");
-    if (box) box.remove();
-}
-
-function uploadWithProgress(url, options, file, onProgress) {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.open(options.method || "POST", url);
-
-        if (options.headers) {
-            for (const [key, value] of Object.entries(options.headers)) {
-                xhr.setRequestHeader(key, value);
-            }
-        }
-
-        xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-                onProgress(event.loaded, event.total);
-            }
-        };
-
-        xhr.onload = () => {
-            const response = {
-                ok: xhr.status >= 200 && xhr.status < 300,
-                status: xhr.status,
-                json: async () => {
-                    try {
-                        return JSON.parse(xhr.responseText);
-                    } catch {
-                        return {};
-                    }
-                }
-            };
-
-            resolve(response);
-        };
-
-        xhr.onerror = () => {
-            reject(new Error("Network error during upload."));
-        };
-
-        xhr.send(options.body);
-    });
-}
-
 async function uploadFiles(fileList) {
 
     if (!fileList || !fileList.length) {
@@ -1105,32 +939,13 @@ async function uploadFiles(fileList) {
                     );
                 }
 
-                showUploadProgress(file.name, 0);
-
-                const uploadResponse = await uploadWithProgress(
-                    API_BASE + "/api/upload",
+                await api(
+                    "/api/upload",
                     {
                         method: "POST",
                         body: formData
-                    },
-                    file,
-                    (loaded, total) => {
-                        const percent = Math.round(
-                            loaded / total * 100
-                        );
-                        showUploadProgress(file.name, percent);
                     }
                 );
-
-                const uploadData = await uploadResponse.json();
-
-                if (!uploadResponse.ok) {
-                    throw new Error(
-                        uploadData.error || "Upload failed."
-                    );
-                }
-
-                showUploadProgress(file.name, 100);
 
                 continue;
             }
@@ -1284,11 +1099,6 @@ async function uploadFiles(fileList) {
                 console.log(
                     `${file.name}: ${percent}%`
                 );
-
-                showUploadProgress(
-                    file.name,
-                    percent
-                );
             }
 
 
@@ -1346,7 +1156,6 @@ async function uploadFiles(fileList) {
 
 
         await loadFiles();
-        hideUploadProgress();
 
 
     } catch (error) {
