@@ -523,16 +523,87 @@ function createCard(file) {
 
     } else {
 
-        thumb.innerHTML =
-            `
-            <div class="file-icon">
-                🎥
-            </div>
+        const video =
+            document.createElement("video");
 
-            <div class="play">
-                ▶
-            </div>
-            `;
+        video.src =
+            API_BASE +
+            `/media/${file.id}`;
+
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+
+        video.addEventListener(
+            "loadeddata",
+            () => {
+                video.currentTime = 0.1;
+            }    } else {
+
+        const video =
+            document.createElement("video");
+
+        video.src =
+            API_BASE +
+            `/media/${file.id}`;
+
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+
+        video.addEventListener(
+            "loadeddata",
+            () => {
+                video.currentTime = 0.1;
+            },
+            { once: true }
+        );
+
+        video.addEventListener(
+            "seeked",
+            () => {
+
+                const canvas =
+                    document.createElement("canvas");
+
+                canvas.width =
+                    video.videoWidth || 320;
+
+                canvas.height =
+                    video.videoHeight || 180;
+
+                const ctx =
+                    canvas.getContext("2d");
+
+                ctx.drawImage(
+                    video,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                canvas.className =
+                    "video-thumb";
+
+                thumb.innerHTML = "";
+                thumb.appendChild(canvas);
+
+                const play =
+                    document.createElement("div");
+
+                play.className = "play";
+                play.textContent = "▶";
+
+                thumb.appendChild(play);
+
+                video.remove();
+            },
+            { once: true }
+        );
+    },
+            { once: true }
+        );
     }
 
 
