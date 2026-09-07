@@ -1,3 +1,38 @@
+async function checkLogin() {
+    try {
+        const data = await api("/api/auth/check");
+
+        if (data.authenticated) {
+            document.getElementById("loginScreen").style.display = "none";
+        } else {
+            document.getElementById("loginScreen").style.display = "flex";
+        }
+    } catch {
+        document.getElementById("loginScreen").style.display = "flex";
+    }
+}
+
+async function login() {
+    const password = document.getElementById("loginPassword").value;
+    const error = document.getElementById("loginError");
+
+    error.textContent = "";
+
+    try {
+        await api("/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ password })
+        });
+
+        document.getElementById("loginScreen").style.display = "none";
+        location.reload();
+    } catch (e) {
+        error.textContent = e.message;
+    }
+}
 const API_BASE =
     "https://media-library-api.vincentpatayan88.workers.dev";
 
@@ -17,6 +52,7 @@ const $ = id =>
 
 
 async function api(path, options = {}) {
+    options.credentials = "include";
 
     const response = await fetch(
         API_BASE + path,
@@ -1382,6 +1418,15 @@ function escapeAttr(
 -------------------------------------------------- */
 
 async function initialize() {
+
+    await checkLogin();
+
+    const loginScreen =
+        document.getElementById("loginScreen");
+
+    if (loginScreen.style.display === "flex") {
+        return;
+    }
 
     try {
 

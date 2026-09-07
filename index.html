@@ -21,6 +21,16 @@
 
 <body>
 
+<div id="loginScreen" style="display:none;position:fixed;inset:0;background:#111;z-index:99999;align-items:center;justify-content:center;">
+    <div style="width:min(90%,360px);padding:30px;background:#222;border-radius:16px;text-align:center;">
+        <h2>🔒 Media Library</h2>
+        <p>Enter your password</p>
+        <input id="loginPassword" type="password" placeholder="Password" style="width:100%;box-sizing:border-box;padding:12px;margin:10px 0;border-radius:8px;border:0;">
+        <button onclick="login()" style="width:100%;padding:12px;border:0;border-radius:8px;cursor:pointer;">Login</button>
+        <p id="loginError" style="color:#ff6b6b;"></p>
+    </div>
+</div>
+
 <div class="app">
 
     <!-- SIDEBAR -->
